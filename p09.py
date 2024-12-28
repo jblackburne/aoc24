@@ -57,21 +57,26 @@ def p09a(data, ndigit=1):
 
 def p09b(data):
     data = _to_internal(data)  # ndigit is still 1; so much for predicting what part 2 would do
-    lidx = 1  # Always points to the leftmost nonzero free space element
+    # lidx[i] always points to the leftmost free space element of size (i+1) or greater
+    lidx = [1, 1, 1, 1, 1, 1, 1, 1, 1]
     ridx = ((len(data) - 1) // 2) * 2  # Last file element
-    while lidx < ridx:
-        for idx in range(lidx, ridx, 2):
-            if data[idx].size >= data[ridx].size:
-                extra_space = data[idx].size - data[ridx].size
-                data[idx] = Record(-1, 0)
-                data.insert(idx + 1, data[ridx])
-                data.insert(idx + 2, Record(-1, extra_space))
-                ridx += 2  # To account for the two inserted records
-                data.pop(ridx)
-                ridx -= 2
-                break
-        while data[lidx].size == 0:
-            lidx += 2
+    while ridx > 0:
+        for i in range(len(lidx)):
+            while data[lidx[i]].size < i + 1 and lidx[i] < ridx and lidx[i] < len(data) - 2:
+                lidx[i] += 2
+        idx = lidx[data[ridx].size - 1]
+        if idx < ridx:
+            extra_space = data[idx].size - data[ridx].size
+            data[idx] = Record(-1, 0)
+            data.insert(idx + 1, data[ridx])
+            data.insert(idx + 2, Record(-1, extra_space))
+            ridx += 2  # To account for the two inserted records
+            combined_size = data[ridx - 1].size
+            combined_size += data.pop(ridx).size
+            if ridx < len(data):
+                combined_size += data.pop(ridx).size
+            data[ridx - 1] = Record(-1, combined_size)
+        ridx -= 2
 
     idx = 0
     checksum = 0
