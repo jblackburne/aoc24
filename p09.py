@@ -77,6 +77,7 @@ def p09b(data):
     checksum = 0
     for record in data:
         if record.id == -1:
+            idx += record.size
             continue
         for _ in range(record.size):
             checksum += idx * record.id
