@@ -36,7 +36,7 @@ def _make_graph(data, cost_go=1, cost_turn=1000):
                 newpos = _move((iy, ix), drx)
                 if data[newpos] == ord("."):
                     whither.append(newpos + (drx, cost_go))
-                graph[(iy, ix, drx)] = Node((iy, ix, drx), 0, whither=whither)
+                graph[(iy, ix, drx)] = Node((iy, ix, drx), whither=whither)
 
     return graph
 
@@ -57,24 +57,33 @@ def p16a(graph, start, end, drx_start=E):
 
 
 def p16b(graph, start, end, drx_start=E):
-    for node in graph.values():
-        node.visited = None
-    pq = [(0,) + start + (drx_start,)]
+    pq = [(0, 0, 0, 0) + start + (drx_start,)]
     while pq:
-        totalcost, iy, ix, drx = heappop(pq)
+        totalcost, iyold, ixold, drxold, iy, ix, drx = heappop(pq)
         node = graph[(iy, ix, drx)]
-        if node.visited is None or totalcost < node.visited:
-            node.visited = totalcost
-        if totalcost > node.visited:
-            if (iy, ix) == end:
-                break
-            else:
-                continue
-        if (iy, ix) == end:
-            # construct path
-            pass
+        if node.value is not None and totalcost > node.value:
+            continue
+        node.value = totalcost
+        node.whence.append((iyold, ixold, drxold))
         for iynew, ixnew, drxnew, cost in node.whither:
-            heappush(pq, (totalcost + cost, iynew, ixnew, drxnew))
+            newtotalcost = totalcost + cost
+            heappush(pq, (newtotalcost, iy, ix, drx, iynew, ixnew, drxnew))
+
+    # Now search the graph backward starting from end
+    # and using "whence"
+    paths = set([start])
+    pq = [end + (idrx,) for idrx in range(4)]
+    while pq:
+        iy, ix, drx = pq.pop(0)
+        node = graph[(iy, ix, drx)]
+        if node.idx[:2] == start:
+            continue
+        node.whence = set(node.whence)
+        for iynew, ixnew, drxnew in node.whence:
+            paths.add((iy, ix))
+            pq.append((iynew, ixnew, drxnew))
+
+    return len(paths)
 
 
 if __name__ == "__main__":
